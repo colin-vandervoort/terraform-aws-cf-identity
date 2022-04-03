@@ -19,8 +19,16 @@ resource "aws_cloudfront_distribution" "cf_dist" {
     domain_name = var.origin_domain
     origin_id   = var.origin_id
 
-    s3_origin_config     = local.s3_origin_config
-    custom_origin_config = local.custom_origin_config
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.my_aws_cloudfront_oai.cloudfront_access_identity_path
+    }
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
   }
 
   enabled             = true
@@ -53,7 +61,10 @@ resource "aws_cloudfront_distribution" "cf_dist" {
     default_ttl            = 3600
     max_ttl                = 86400
 
-    function_association = local.dir_function_association
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = var.use_s3_rest_origin ? aws_cloudfront_function.dir_index_func.arn : null
+    }
   }
 
   price_class = var.price_class
