@@ -27,5 +27,5 @@ variable "default_root_object" {
 
 variable "use_s3_rest_origin" {
   type    = bool
-  default = false
+  default = true
 }
