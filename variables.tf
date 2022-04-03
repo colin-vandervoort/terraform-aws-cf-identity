@@ -30,10 +30,6 @@ variable "use_s3_rest_origin" {
   default = false
 }
 
-variable "s3_bucket_arn" {
-  type = string
-}
-
 locals {
   dir_function_association = var.use_s3_rest_origin ? {
     event_type   = "viewer-request"
