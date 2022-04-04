@@ -2,6 +2,9 @@ resource "aws_acm_certificate" "cert" {
   provider          = aws.east
   domain_name       = var.primary_domain
   validation_method = "DNS"
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 data "aws_route53_zone" "route53_zone" {
@@ -14,8 +17,11 @@ resource "aws_route53_record" "address_record" {
   type     = each.key
   zone_id  = data.aws_route53_zone.route53_zone.zone_id
   name     = var.primary_domain
-  records  = [aws_cloudfront_distribution.cf_dist.domain_name]
-  ttl      = "300"
+  alias {
+    name                   = aws_cloudfront_distribution.cf_dist.domain_name
+    zone_id                = aws_cloudfront_distribution.cf_dist.hosted_zone_id
+    evaluate_target_health = false
+  }
 }
 
 resource "aws_route53_record" "dns_record" {
