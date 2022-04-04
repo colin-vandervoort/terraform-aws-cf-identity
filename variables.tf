@@ -1,6 +1,6 @@
-# variable "primary_domain" {
-#   type = string
-# }
+variable "primary_domain" {
+  type = string
+}
 
 variable "origin_domain" {
   type = string
