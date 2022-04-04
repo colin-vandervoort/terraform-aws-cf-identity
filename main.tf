@@ -1,15 +1,16 @@
 resource "aws_acm_certificate" "cert" {
-  provider          = aws.east
   domain_name       = var.primary_domain
   validation_method = "DNS"
   lifecycle {
     create_before_destroy = true
   }
+  provider          = aws.east
 }
 
 data "aws_route53_zone" "route53_zone" {
   name         = var.primary_domain
   private_zone = false
+  provider     = aws.east
 }
 
 resource "aws_route53_record" "address_record" {
@@ -22,6 +23,7 @@ resource "aws_route53_record" "address_record" {
     zone_id                = aws_cloudfront_distribution.cf_dist.hosted_zone_id
     evaluate_target_health = false
   }
+  provider = aws.east
 }
 
 resource "aws_route53_record" "dns_record" {
@@ -39,11 +41,13 @@ resource "aws_route53_record" "dns_record" {
   ttl             = 60
   type            = each.value.type
   zone_id         = data.aws_route53_zone.route53_zone.zone_id
+  provider        = aws.east
 }
 
 resource "aws_acm_certificate_validation" "cert_validate" {
   certificate_arn         = aws_acm_certificate.cert.arn
   validation_record_fqdns = [for record in aws_route53_record.dns_record : record.fqdn]
+  provider                = aws.east
 }
 
 # resource "aws_s3_bucket" "cloudfront_logs" {
