@@ -8,6 +8,15 @@ data "aws_route53_zone" "route53_zone" {
   private_zone = false
 }
 
+resource "aws_route53_record" "address_record" {
+  for_each = toset(["A", "AAAA"])
+  type     = each.key
+  zone_id  = data.aws_route53_zone.route53_zone.zone_id
+  name     = var.primary_domain
+  records  = [aws_cloudfront_distribution.cf_dist.domain_name]
+  ttl      = "300"
+}
+
 resource "aws_route53_record" "dns_record" {
   for_each = {
     for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
@@ -113,16 +122,8 @@ resource "aws_cloudfront_distribution" "cf_dist" {
 
   viewer_certificate {
     acm_certificate_arn = aws_acm_certificate_validation.cert_validate.certificate_arn
-    # cloudfront_default_certificate = true
+    ssl_support_method  = "sni-only"
   }
 }
 
-resource "aws_route53_record" "r53_address" {
-  for_each = toset(["A", "AAAA"])
-  type     = each.key
-  zone_id  = data.aws_route53_zone.route53_zone.zone_id
-  name     = var.primary_domain
-  records  = [aws_cloudfront_distribution.cf_dist.domain_name]
-  ttl      = "300"
-}
 
