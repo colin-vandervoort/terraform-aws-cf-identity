@@ -20,41 +20,7 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 )
 
-func TestS3Delete(t *testing.T) {
-	t.Skip()
-	awsRegion := "ap-southeast-2"
-	bucket := "cloudfront-test-qobm1x"
-	testObjectName := "test.html"
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(awsRegion))
-	if err != nil {
-		fmt.Println("configuration error, " + err.Error())
-		os.Exit(1)
-	}
-
-	client := s3.NewFromConfig(cfg)
-
-	deleteInput := &s3.DeleteObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(testObjectName),
-	}
-
-	_, err = client.DeleteObject(context.TODO(), deleteInput)
-	if err != nil {
-		fmt.Println("delete error, " + err.Error())
-		os.Exit(1)
-	}
-
-	headInput := &s3.HeadObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(testObjectName),
-	}
-	maxWaitTime, _ := time.ParseDuration("5m")
-	waiter := s3.NewObjectNotExistsWaiter(client)
-	waiter.Wait(context.TODO(), headInput, maxWaitTime)
-}
-
 func TestS3Origin(t *testing.T) {
-	// t.Skip()
 	awsRegion := grunt_aws.GetRandomStableRegion(t, nil, nil)
 
 	uniqueID := strings.ToLower(grunt_random.UniqueId())
