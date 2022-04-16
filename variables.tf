@@ -1,5 +1,14 @@
-variable "primary_domain" {
+variable "cf_domain_name" {
   type = string
+}
+
+variable "cf_zone_id" {
+  type = string
+}
+
+variable "enable_ipv6" {
+  type    = bool
+  default = true
 }
 
 variable "origin_domain" {
@@ -10,22 +19,6 @@ variable "origin_id" {
   type = string
 }
 
-variable "enable_ipv6" {
-  type    = bool
-  default = true
-}
-
-variable "price_class" {
-  type    = string
-  default = "PriceClass_200"
-}
-
-variable "default_root_object" {
-  type    = string
-  default = "index.html"
-}
-
-variable "use_s3_rest_origin" {
-  type    = bool
-  default = true
+variable "primary_domain" {
+  type = string
 }
