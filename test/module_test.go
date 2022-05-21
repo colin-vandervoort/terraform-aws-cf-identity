@@ -20,6 +20,34 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 )
 
+func TestALBOrigin(t *testing.T) {
+	awsRegion := grunt_aws.GetRandomStableRegion(t, nil, nil)
+
+	uniqueID := strings.ToLower(grunt_random.UniqueId())
+	testDocStr := fmt.Sprintf("<!DOCTYPE html><title>cloudfront test</title><body>%s</body>", uniqueID)
+	cfDomain := "spaceytest.xyz"
+	originDomain := "spaceytest-origin.xyz"
+
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: "./alb-origin",
+		Vars: map[string]interface{}{
+			"aws_region":     awsRegion,
+			"primary_domain": cfDomain,
+			"origin_domain":  originDomain,
+			"html_text":      testDocStr,
+		},
+	})
+
+	defer terraform.Destroy(t, terraformOptions)
+	terraform.InitAndApply(t, terraformOptions)
+
+	tlsConfig := tls.Config{}
+	maxRetries := 5
+	timeBetweenRetries := 5 * time.Second
+	// Verify that we get back a 200 OK with the contents of our test HTML
+	http_helper.HttpGetWithRetry(t, cfDomain, &tlsConfig, 200, testDocStr, maxRetries, timeBetweenRetries)
+}
+
 func TestS3Origin(t *testing.T) {
 	awsRegion := grunt_aws.GetRandomStableRegion(t, nil, nil)
 
