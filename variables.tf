@@ -11,14 +11,6 @@ variable "enable_ipv6" {
   default = true
 }
 
-variable "origin_domain" {
-  type = string
-}
-
-variable "origin_id" {
-  type = string
-}
-
 variable "primary_domain" {
   type = string
 }

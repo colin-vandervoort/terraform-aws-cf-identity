@@ -36,7 +36,7 @@ func TestS3Origin(t *testing.T) {
 	testUrlStr := testUrlStruct.String()
 
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: ".",
+		TerraformDir: "./s3-origin",
 		Vars: map[string]interface{}{
 			"aws_region":     awsRegion,
 			"bucket":         bucket,

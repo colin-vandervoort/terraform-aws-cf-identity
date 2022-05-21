@@ -32,10 +32,8 @@ provider "aws" {
 
 // Module under test
 module "terraform_aws_cloudfront_support" {
-  source         = "./.."
+  source         = "../.."
   primary_domain = var.primary_domain
-  origin_domain  = aws_s3_bucket.test_static_files.bucket_regional_domain_name
-  origin_id      = local.s3_origin_id
   enable_ipv6    = local.enable_ipv6
   cf_domain_name = aws_cloudfront_distribution.cf_dist.domain_name
   cf_zone_id     = aws_cloudfront_distribution.cf_dist.hosted_zone_id
