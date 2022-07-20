@@ -17,8 +17,19 @@ variable "bucket" {
   type = string
 }
 
-variable "primary_domain" {
+variable "test_object_key" {
   type = string
+}
+
+variable "test_object_content" {
+  type = string
+}
+
+variable "domains" {
+  type = object({
+    primary   = string
+    alternate = list(string)
+  })
 }
 
 locals {
@@ -33,7 +44,7 @@ provider "aws" {
 // Module under test
 module "terraform_aws_cloudfront_support" {
   source         = "../.."
-  primary_domain = var.primary_domain
+  domains        = var.domains
   enable_ipv6    = local.enable_ipv6
   cf_domain_name = aws_cloudfront_distribution.cf_dist.domain_name
   cf_zone_id     = aws_cloudfront_distribution.cf_dist.hosted_zone_id
@@ -41,7 +52,14 @@ module "terraform_aws_cloudfront_support" {
 
 // S3 site bucket
 resource "aws_s3_bucket" "test_static_files" {
-  bucket = var.bucket
+  bucket        = var.bucket
+  force_destroy = true
+}
+
+resource "aws_s3_object" "test_object" {
+  bucket  = aws_s3_bucket.test_static_files.id
+  key     = var.test_object_key
+  content = var.test_object_content
 }
 
 resource "aws_s3_bucket_policy" "blog_static_files_policy" {
@@ -80,7 +98,7 @@ resource "aws_cloudfront_distribution" "cf_dist" {
   enabled         = true
   is_ipv6_enabled = local.enable_ipv6
 
-  aliases = [var.primary_domain]
+  aliases = concat([var.domains.primary], var.domains.alternate)
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]

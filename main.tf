@@ -1,23 +1,28 @@
+locals {
+  alias_domain_set = toset(concat([var.domains.primary], var.domains.alternate))
+}
+
 resource "aws_acm_certificate" "cert" {
-  domain_name       = var.primary_domain
-  validation_method = "DNS"
+  domain_name               = var.domains.primary
+  subject_alternative_names = var.domains.alternate
+  validation_method         = "DNS"
   lifecycle {
     create_before_destroy = true
   }
-  provider          = aws.east
+  provider = aws.east
 }
 
 data "aws_route53_zone" "route53_zone" {
-  name         = var.primary_domain
+  name         = var.domains.primary
   private_zone = false
   provider     = aws.east
 }
 
-resource "aws_route53_record" "address_record" {
-  for_each = toset(["A", "AAAA"])
-  type     = each.key
+resource "aws_route53_record" "a" {
+  for_each = local.alias_domain_set
+  type     = "A"
   zone_id  = data.aws_route53_zone.route53_zone.zone_id
-  name     = var.primary_domain
+  name     = each.key
   alias {
     name                   = var.cf_domain_name
     zone_id                = var.cf_zone_id
@@ -26,7 +31,20 @@ resource "aws_route53_record" "address_record" {
   provider = aws.east
 }
 
-resource "aws_route53_record" "dns_record" {
+resource "aws_route53_record" "aaaa" {
+  for_each = var.enable_ipv6 ? local.alias_domain_set : toset([])
+  type     = "AAAA"
+  zone_id  = data.aws_route53_zone.route53_zone.zone_id
+  name     = each.key
+  alias {
+    name                   = var.cf_domain_name
+    zone_id                = var.cf_zone_id
+    evaluate_target_health = false
+  }
+  provider = aws.east
+}
+
+resource "aws_route53_record" "cert_validation_dns" {
   for_each = {
     for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
@@ -46,7 +64,7 @@ resource "aws_route53_record" "dns_record" {
 
 resource "aws_acm_certificate_validation" "cert_validate" {
   certificate_arn         = aws_acm_certificate.cert.arn
-  validation_record_fqdns = [for record in aws_route53_record.dns_record : record.fqdn]
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation_dns : record.fqdn]
   provider                = aws.east
 }
 
